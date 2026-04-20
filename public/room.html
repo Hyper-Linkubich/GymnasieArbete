@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="room.js" defer></script>
+</head>
+
+<body>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        let playerID = localStorage.getItem("playerId")
+
+        const socket = io({
+            query: {
+                playerId: playerID
+            }
+        })
+        const lobbyId = window.location.search.slice(1)
+
+
+        //när en lobby är redo med 2 spelare inne
+        socket.on('lobbyReady', players => {
+            document.getElementById('status').innerText = `Lobby redo! Spelare: ${players.join(',')}`;
+        })
+        //ta emot game updates
+        socket.on('gameUpdate', data => {
+            document.getElementById('status').innerText = `spelStatus: ${JSON.stringify(data)}`;
+        })
+
+        //felhantering exempelvis full lobby eller fel ID
+        socket.on('errorMessage', msg => {
+            document.getElementById('status').innerText = `Fel ${msg}`;
+        })
+
+
+    </script>
+
+
+
+
+    <section class="game-table">
+        <header class="table-header">
+            <section id="lobbyId" class="lobby-id"></section>
+            <section id="status" class="status">Väntar på motspelare...</section>
+            <button class="status" onclick="goBackToMenu()">Tillbaka till Meny</button>
+        </header>
+
+        <section id="opponentHand" class="player-zone opponent-zone">
+            <h2 class="zone-title">Motståndare</h2>
+        </section>
+
+        <section id="opponentBoard" class="board-zone"></section>
+
+        <section id="yourBoard" class="board-zone"></section>
+
+        <section id="yourHand" class="player-zone your-zone">
+            <h2 class="zone-title">Din hand</h2>
+        </section>
+</body>

@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <button id="createLobbyBtn">Skapa lobby</button>
+    <input id="lobbyIdInput" placeholder="Lobby-ID">
+    <button id="joinLobbyBtn">Joina lobby</button>
+    <div id="status"></div>
+
+    <!--Lägg till socket.io klient bibliotek-->
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+
+        let playerID = localStorage.getItem("playerId")
+        if (!playerID) {
+            playerID = "player_" + Math.random().toString(36).substring(2, 15)
+            localStorage.setItem("playerId", playerID);
+        }
+
+
+        const socket = io({
+            query: {
+                playerId: playerID
+            }
+        })
+
+        document.getElementById('createLobbyBtn').addEventListener('click', () => {
+            socket.emit('createLobby', document.getElementById('lobbyIdInput').value)
+        })
+
+        document.getElementById('joinLobbyBtn').addEventListener('click', () => {
+            const lobbyId = document.getElementById('lobbyIdInput').value;
+            socket.emit('joinLobby', lobbyId);
+        })
+
+        // redirectar till room.html när man trycker join / skapa lobby
+        socket.on('lobbyCreated', lobbyId => {
+            window.location.href = '/room.html?' + lobbyId;
+            document.getElementById('status').innerText = `Lobby skapad: ID = ${lobbyId}`;
+        })
+
+
+    </script>
+</body>
+
+</html>
