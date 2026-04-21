@@ -61,15 +61,30 @@ io.on('connection', socket => {
     //Lobby join segment
     socket.on('joinLobby', lobbyId => {
         const lobby = lobbies[lobbyId];
-        lobby.players.push(players.get(playerId));
-        socket.join(lobbyId);
-        socket.emit('lobbyCreated', lobbyId);
-        if (lobby && lobby.players.length === 2) {
-            io.to(lobbyId).emit('lobbyReady', lobby.players) //starta lobbyn när vi har 2 spelare
+
+        if (!lobby) {
+            return socket.emit("errorMessage", "Lobbyn finns inte")
+        }
+
+        if (!lobby.players.player1.id) {
+            lobby.players.player1.id = players.get(playerId);
+        } else if (!lobby.players.player2.id) {
+            lobby.players.player2.id = players.get(playerId);
         } else {
-            socket.emit('errorMessage', 'lobby is full or does not exist');
+            return socket.emit("errorMessage", "Lobbyn är redan full")
+        }
+
+        socket.join(lobbyId);
+        socket.emit("lobbyCreated", lobbyId);
+
+        if (lobby.players.player1.id && lobby.players.player2.id) {
+            initDeck(lobby.players.player1);
+            initDeck(lobby.players.player2);
+
+            io.to(lobbyId).emit("lobbyReady", [lobby.players.player1.id, lobby.players.player2.id]);
         }
     })
+
     socket.on("gameUpdateRequest", (lobbyId, gameState) => {
         io.to(lobbyId).emit("gameUpdate", gameState);
     })
@@ -113,13 +128,22 @@ io.on('connection', socket => {
     // let currentTurnIndex = 0;
 
     function initDeck(player) {
-        // calla detta med player 1 eller 2 gör med båda i load phase
-        for (let i = 0; i < 13; i++) {
-            for (let j = 0; j < 4; j++) { //suits
+        const suits = ['spades', 'hearts', 'diamonds', 'clubs'];
+        const ranks = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
 
+        for (let i = 0; i < 13; i++) { // 13 valörer
+            for (let j = 0; j < 4; j++) { // 4 färger
+                player.deck.push({
+                    suit: suits[j],
+                    rank: ranks[i]
+                });
             }
         }
+        player.deck.sort(() => Math.random() - 0.5)
+
+        console.log("Kotrlek skapad och shufflad antal kort:", player.deck.length);
     }
+
 
     function nextTurn(lobbyId) {
         currentTurnIndex = (currentTurnIndex + 1) % playerInLobby.length;
