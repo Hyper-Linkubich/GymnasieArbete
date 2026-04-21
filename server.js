@@ -91,27 +91,32 @@ io.on('connection', socket => {
     // io.to(lobbyId).emit('gameUpdate', /*game state or action */)
 
     //Lobby Leave segment
-    socket.on('leaveLobby', (lobbyId, player) => {
+    socket.on('leaveLobby', (lobbyId) => {
         const lobby = lobbies[lobbyId];
         if (!lobby) return;
 
+        // Hitta vilken spelare som lämnar och nollställ ID:t
+        if (lobby.players.player1.id === players.get(playerId)) {
+            lobby.players.player1.id = null;
+        } else if (lobby.players.player2.id === players.get(playerId)) {
+            lobby.players.player2.id = null;
+        }
 
-        lobby.players = lobby.players.filter(id => id !== playerId);
         socket.leave(lobbyId);
+        console.log(`${playerId} lämnade lobbyn ${lobbyId}`);
 
-        console.log(`${playerId} lämnade lobbyn ${lobbyId}`)
+        // Kontrollera om lobbyn är helt tom
+        const p1Exists = !!lobby.players.player1.id;
+        const p2Exists = !!lobby.players.player2.id;
 
-        if (lobby.players.length === 1) {
-            io.to(lobbyId).emit("opponentLeft", { message: "Motståndaren har lämnat lobbyn" })
-        }
-
-        if (lobby.players.length === 0) {
+        if (!p1Exists && !p2Exists) {
             delete lobbies[lobbyId];
-            console.log(`Lobbyn: ${lobbyId} raderades`)
+            console.log(`Lobbyn: ${lobbyId} raderades`);
+        } else {
+            // Om en spelare är kvar, meddela den
+            io.to(lobbyId).emit("opponentLeft", { message: "Motståndaren har lämnat lobbyn" });
         }
-
-
-    })
+    });
 
 
 

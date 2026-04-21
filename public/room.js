@@ -1,6 +1,6 @@
 
 
 function goBackToMenu() {
-    socket.emit('leaveLobby', lobbyId, playerId)
+    socket.emit('leaveLobby', lobbyId)
     window.location.href = '/index.html';
 }
