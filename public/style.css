@@ -88,9 +88,7 @@ main {
     transform: rotateY(180deg);
 }
 
-.card:hover .card-inner {
-    transform: rotateY(180deg);
-}
+
 
 button:hover {
     scale: 1.1;
@@ -146,12 +144,41 @@ button:active {
     cursor: pointer;
 }
 
+.score-counter {
+    float: right;
+    background: rgba(0, 0, 0, 0.45);
+    padding: 2px 10px;
+    border-radius: 8px;
+    font-size: 1rem;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
 .player-zone {
+    display: flex;
+    flex-wrap: wrap;
+    max-width: 100%;
+    box-sizing: border-box;
+    gap: 15px;
+    min-height: calc(var(--card-height) + 50 px);
+    align-items: center;
     border: 1px solid rgba(255, 255, 255, 0.25);
     border-radius: 14px;
     padding: 10px;
     margin-bottom: 14px;
     background: rgba(255, 255, 255, 0.06);
+}
+
+.player-zone .card {
+    position: relative;
+    margin: 10px;
+}
+
+.zone-title {
+    width: auto;
+    margin-right: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
 }
 
 .player-zone.opponent-zone {
@@ -160,13 +187,6 @@ button:active {
 
 .player-zone.your-zone {
     border-color: rgba(100, 200, 255, 0.4);
-}
-
-.zone-title {
-    margin: 0 0 8px;
-    font-size: 0.95rem;
-    font-weight: 600;
-    color: rgba(255, 255, 255, 0.9);
 }
 
 .board-zone {
@@ -189,4 +209,27 @@ button:active {
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 8px;
     position: relative;
+}
+
+@keyframes dropIn {
+    0% {
+        transform: translateY(40px) scale(1.1);
+        opacity: 0;
+    }
+
+    100% {
+        transform: translateY(0) scale(1);
+        opacity: 1;
+    }
+}
+
+.card-played-anim {
+    animation: dropIn 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+.card-leave-anim {
+    transform: translateY(-50px) scale(0.8) !important;
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.15s ease-in !important;
 }

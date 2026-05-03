@@ -134,7 +134,7 @@ io.on('connection', socket => {
 
     function initDeck(player) {
         const suits = ['spades', 'hearts', 'diamonds', 'clubs'];
-        const ranks = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
+        const ranks = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13'];
 
         for (let i = 0; i < 13; i++) { // 13 valörer
             for (let j = 0; j < 4; j++) { // 4 färger
