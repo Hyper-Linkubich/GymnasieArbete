@@ -81,9 +81,74 @@ io.on('connection', socket => {
             initDeck(lobby.players.player1);
             initDeck(lobby.players.player2);
 
+            lobby.players.player1.hand = lobby.players.player1.deck.splice(0, 5);
+            lobby.players.player2.hand = lobby.players.player2.deck.splice(0, 5);
+
             io.to(lobbyId).emit("lobbyReady", [lobby.players.player1.id, lobby.players.player2.id]);
+
+            io.to(lobby.players.player1.id).emit("dealHand", lobby.players.player1.hand);
+            io.to(lobby.players.player2.id).emit("dealHand", lobby.players.player2.hand);
         }
-    })
+    }) //Slut på lobby join
+
+    socket.on('playCard', (lobbyId, cardData) => {
+        const lobby = lobbies[lobbyId];
+        if (!lobby) return;
+
+        // Skapa genvägar till spelarna direkt
+        const p1 = lobby.players.player1;
+        const p2 = lobby.players.player2;
+
+        // Vilken spelare la kortet?
+        let playerKey = null;
+        if (p1.id === socket.id) playerKey = "player1";
+        else if (p2.id === socket.id) playerKey = "player2";
+
+        // Spara kortet och lägg till poäng
+        if (playerKey) {
+            lobby.players[playerKey].playedCards.push(cardData);
+            lobby.players[playerKey].score += parseInt(cardData.rank);
+        }
+
+        // Skicka kortet till motståndaren
+        socket.to(lobbyId).emit("opponentPlayedCard", cardData);
+
+        // --- RÄTTAD KONTROLL: Kolla om BÅDA har lagt 5 kort ---
+        if (p1.playedCards.length === 5 && p2.playedCards.length === 5) {
+
+            // Kolla vem som vann BARA om rundan är slut
+            if (p1.score > p2.score) {
+                io.to(p1.id).emit("Victory");
+                io.to(p2.id).emit("Defeat");
+            } else if (p1.score < p2.score) {
+                io.to(p1.id).emit("Defeat");
+                io.to(p2.id).emit("Victory");
+            } else {
+                io.to(lobbyId).emit("Draw");
+            }
+
+            // Starta om spelet efter 5 sekunder
+            setTimeout(() => {
+                // Nollställ för nästa runda
+                p1.playedCards = [];
+                p2.playedCards = [];
+                p1.score = 0;
+                p2.score = 0;
+
+                // Fyll på leken om den är liten
+                if (p1.deck.length <= 5) initDeck(p1);
+                if (p2.deck.length <= 5) initDeck(p2);
+
+                // Dela ut nya kort
+                p1.hand = p1.deck.splice(0, 5);
+                p2.hand = p2.deck.splice(0, 5);
+
+                io.to(lobbyId).emit("Rematch");
+                io.to(p1.id).emit("dealHand", p1.hand);
+                io.to(p2.id).emit("dealHand", p2.hand);
+            }, 5000);
+        }
+    });
 
     socket.on("gameUpdateRequest", (lobbyId, gameState) => {
         io.to(lobbyId).emit("gameUpdate", gameState);
@@ -117,20 +182,6 @@ io.on('connection', socket => {
             io.to(lobbyId).emit("opponentLeft", { message: "Motståndaren har lämnat lobbyn" });
         }
     });
-
-
-
-
-    // if (players.get(playerId) === lobbies.currentPlayerId) {
-    //     //vid godkänt move ta bort kort och applya effekter
-    //     // sen byt currentplayer
-    //     lobbies[lobbyId].currentPlayerId = lobbies.otherPlayerId;
-    //     io.to(lobbyId).emit('turnChanged', lobbies.currentPlayerId);
-    // } else {
-    //     //ignorera eller skicka tillbaka
-    // }
-    // const playerInLobby = lobbies.players; //array av två socket id
-    // let currentTurnIndex = 0;
 
     function initDeck(player) {
         const suits = ['spades', 'hearts', 'diamonds', 'clubs'];

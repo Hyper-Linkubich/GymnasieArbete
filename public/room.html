@@ -10,7 +10,10 @@
 </head>
 
 <body>
-
+    <div id="endGameOverlay" class="hidden">
+        <h1 id="endGameMessage"> </h1>
+        <p>Rematch om 5 sekunder</p>
+    </div>
     <script src="/socket.io/socket.io.js"></script>
     <script>
         let playerID = localStorage.getItem("playerId")
@@ -22,25 +25,39 @@
         })
         const lobbyId = window.location.search.slice(1)
 
+        socket.emit('joinLobby', lobbyId);
 
-        //när en lobby är redo med 2 spelare inne
+        // När en lobby är redo med 2 spelare inne
         socket.on('lobbyReady', players => {
             document.getElementById('status').innerText = `Lobby redo! Spelare: ${players.join(',')}`;
         })
-        //ta emot game updates
-        socket.on('gameUpdate', data => {
-            document.getElementById('status').innerText = `spelStatus: ${JSON.stringify(data)}`;
+
+        socket.on('dealHand', hand => {
+            hand.forEach(card => {
+                drawCardToHand(card.rank, card.suit);
+            });
         })
 
-        //felhantering exempelvis full lobby eller fel ID
+        socket.on('opponentPlayedCard', cardData => {
+            playCard("opponentBoard", cardData)
+        })
+
+        // Felhantering exempelvis full lobby eller fel ID
         socket.on('errorMessage', msg => {
             document.getElementById('status').innerText = `Fel ${msg}`;
         })
 
+        socket.on('Victory', () => showEndGame("Victory"));
+        socket.on('Defeat', () => showEndGame("Defeat"));
+        socket.on("Draw", () => showEndGame("Draw"));
+
+        socket.on('Rematch', () => {
+            hideEndGame();
+            resetBoard();
+            document.getElementById('status').innerText = "Ny runda har startat"
+        })
 
     </script>
-
-
 
 
     <section class="game-table">
@@ -57,18 +74,6 @@
         </section>
 
         <section id="opponentBoard" class="board-zone">
-            <div class="card-slot">
-                <div class="card">
-                    <div class="card-inner">
-                        <div class="card-front">
-                            <img src="/assets/ace_of_spades.png" alt="" class="card-img">
-                        </div>
-                        <div class="card-back">
-                            <img src="/assets/card back red.png" alt="" class="card-img">
-                        </div>
-                    </div>
-                </div>
-            </div>
             <div class="card-slot"></div>
             <div class="card-slot"></div>
             <div class="card-slot"></div>
@@ -78,24 +83,11 @@
         </section>
 
         <section id="yourBoard" class="board-zone">
-            <div class="card-slot">
-                <div class="card">
-                    <div class="card-inner">
-                        <div class="card-front">
-                            <img src="/assets/ace_of_spades.png" alt="" class="card-img">
-                        </div>
-                        <div class="card-back">
-                            <img src="/assets/card back blue.png" alt="" class="card-img">
-                        </div>
-                    </div>
-                </div>
-            </div>
             <div class="card-slot"></div>
             <div class="card-slot"></div>
             <div class="card-slot"></div>
             <div class="card-slot"></div>
             <div class="card-slot"></div>
-
         </section>
 
         <section id="yourHand" class="player-zone your-zone">

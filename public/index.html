@@ -37,7 +37,7 @@
 
         document.getElementById('joinLobbyBtn').addEventListener('click', () => {
             const lobbyId = document.getElementById('lobbyIdInput').value;
-            socket.emit('joinLobby', lobbyId);
+            window.location.href = '/room.html?' + lobbyId;
         })
 
         // redirectar till room.html när man trycker join / skapa lobby
